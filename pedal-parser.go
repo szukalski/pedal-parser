@@ -32,17 +32,26 @@ type Pedal struct {
 	Title             string      `json:"title"`
 }
 
-type BuildComponents struct {
+type BomBuildComponents struct {
 	Component
 	Id string `json:"id"`
 }
 
-type Build struct {
-	BuildName  string            `json:"buildName"`
-	Components []BuildComponents `json:"buildComponents"`
+type BomBuild struct {
+	BuildName  string               `json:"buildName"`
+	Components []BomBuildComponents `json:"buildComponents"`
 }
 
 type Bom struct {
+	Build []BomBuild `json:"build"`
+}
+
+type Build struct {
+	BuildName string  `json:"buildName"`
+	Pedals    []Pedal `json:"pedals"`
+}
+
+type BuildList struct {
 	Build []Build `json:"build"`
 }
 
@@ -52,10 +61,10 @@ func check(e error) {
 	}
 }
 
-func readPedal(b []byte) {
+func readPedal(b []byte) []BomBuildComponents {
+	var bomBuildComponents []BomBuildComponents
 	var pedal Pedal
 	json.Unmarshal(b, &pedal)
-	build := Build{BuildName: pedal.Id}
 	for i := 0; i < len(pedal.Components); i++ {
 		component := Component{
 			Category:    pedal.Components[i].Category,
@@ -63,22 +72,47 @@ func readPedal(b []byte) {
 			Value:       pedal.Components[i].Value,
 			Quantity:    pedal.Components[i].Quantity,
 		}
-		buildComponent := BuildComponents{
+		buildComponent := BomBuildComponents{
 			Id:        pedal.Id,
 			Component: component,
 		}
-		build.Components = append(build.Components, buildComponent)
+		bomBuildComponents = append(bomBuildComponents, buildComponent)
 	}
-	byteArray, err := json.Marshal(build)
-	check(err)
-	fmt.Println(string(byteArray))
-	return
+	return bomBuildComponents
+}
+
+func readBuildList(b []byte) Bom {
+	var buildList BuildList
+	json.Unmarshal(b, &buildList)
+	var bom Bom
+	for i := 0; i < len(buildList.Build); i++ {
+		build := BomBuild{BuildName: buildList.Build[i].BuildName}
+		for j := 0; j < len(buildList.Build[i].Pedals); j++ {
+			pedalJson, err := os.Open("../pedals/" + buildList.Build[i].Pedals[j].Id + ".json")
+			check(err)
+			byteValue, _ := ioutil.ReadAll(pedalJson)
+			var pedal Pedal
+			json.Unmarshal(byteValue, &pedal)
+			pedalComponents := readPedal(byteValue)
+			fmt.Println(pedalComponents)
+		}
+		bom.Build = append(bom.Build, build)
+	}
+	return bom
 }
 
 func main() {
-	jsonFile, err := os.Open("./pedal.json")
+	if len(os.Args) != 2 {
+		fmt.Println("Usage: pedal-parser 'pedal-buildlist.json'")
+		os.Exit(1)
+	}
+	buildList, err := os.Open(os.Args[1])
 	check(err)
-	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	readPedal(byteValue)
+	defer buildList.Close()
+	byteValue, _ := ioutil.ReadAll(buildList)
+
+	build := readPedal(byteValue)
+	byteArray, err := json.Marshal(build)
+	check(err)
+	fmt.Println(string(byteArray))
 }
