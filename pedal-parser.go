@@ -111,7 +111,6 @@ func main() {
 		fmt.Println("Usage: pedal-parser 'pedal-buildlist.json'")
 		os.Exit(1)
 	}
-	checkpoint()
 	buildList, err := os.Open(os.Args[1])
 	check(err)
 	defer buildList.Close()
