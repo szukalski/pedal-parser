@@ -102,17 +102,23 @@ func readBuildList(b []byte) Bom {
 	return bom
 }
 
+func checkpoint() {
+	fmt.Println("checkpoint")
+	return
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: pedal-parser 'pedal-buildlist.json'")
 		os.Exit(1)
 	}
+	checkpoint()
 	buildList, err := os.Open(os.Args[1])
 	check(err)
 	defer buildList.Close()
 	byteValue, _ := ioutil.ReadAll(buildList)
 
-	build := readPedal(byteValue)
+	build := readBuildList(byteValue)
 	byteArray, err := json.Marshal(build)
 	check(err)
 	fmt.Println(string(byteArray))
