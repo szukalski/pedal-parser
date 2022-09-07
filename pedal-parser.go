@@ -61,10 +61,13 @@ func check(e error) {
 	}
 }
 
-func readPedal(b []byte) []BomBuildComponents {
+func getPedalComponents(s string) []BomBuildComponents {
+	pedalJson, err := os.Open("../pedals/" + s + ".pedal.json")
+	check(err)
+	byteValue, _ := ioutil.ReadAll(pedalJson)
 	var bomBuildComponents []BomBuildComponents
 	var pedal Pedal
-	json.Unmarshal(b, &pedal)
+	json.Unmarshal(byteValue, &pedal)
 	for i := 0; i < len(pedal.Components); i++ {
 		component := Component{
 			Category:    pedal.Components[i].Category,
@@ -86,13 +89,12 @@ func readBuildList(b []byte) Bom {
 	json.Unmarshal(b, &buildList)
 	var bom Bom
 	for i := 0; i < len(buildList.Build); i++ {
-		build := BomBuild{BuildName: buildList.Build[i].BuildName}
+		build := BomBuild{
+			BuildName: buildList.Build[i].BuildName,
+		}
 		for j := 0; j < len(buildList.Build[i].Pedals); j++ {
-			pedalJson, err := os.Open("../pedals/" + buildList.Build[i].Pedals[j].Id + ".pedal.json")
-			check(err)
-			byteValue, _ := ioutil.ReadAll(pedalJson)
-			pedalComponents := readPedal(byteValue)
-			fmt.Println(pedalComponents)
+			pedalComponents := getPedalComponents(buildList.Build[i].Pedals[j].Id)
+			build.Components = append(build.Components, pedalComponents...)
 		}
 		bom.Build = append(bom.Build, build)
 	}
