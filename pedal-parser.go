@@ -88,8 +88,7 @@ func readBuildList(b []byte) Bom {
 	for i := 0; i < len(buildList.Build); i++ {
 		build := BomBuild{BuildName: buildList.Build[i].BuildName}
 		for j := 0; j < len(buildList.Build[i].Pedals); j++ {
-			fmt.Println("../pedals/" + buildList.Build[i].Pedals[j].Id + ".json")
-			pedalJson, err := os.Open("../pedals/" + buildList.Build[i].Pedals[j].Id + ".json")
+			pedalJson, err := os.Open("../pedals/" + buildList.Build[i].Pedals[j].Id + ".pedal.json")
 			check(err)
 			byteValue, _ := ioutil.ReadAll(pedalJson)
 			var pedal Pedal
