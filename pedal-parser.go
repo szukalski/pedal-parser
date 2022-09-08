@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sort"
 )
 
 type Component struct {
@@ -32,27 +33,19 @@ type Pedal struct {
 	Title             string      `json:"title"`
 }
 
-type BomBuildComponents struct {
+type BomComponents struct {
 	Component
 	Id string `json:"id"`
 }
 
-type BomBuild struct {
-	BuildName  string               `json:"buildName"`
-	Components []BomBuildComponents `json:"buildComponents"`
-}
-
 type Bom struct {
-	Build []BomBuild `json:"build"`
-}
-
-type Build struct {
-	BuildName string  `json:"buildName"`
-	Pedals    []Pedal `json:"pedals"`
+	BuildName  string          `json:"buildName"`
+	Components []BomComponents `json:"buildComponents"`
 }
 
 type BuildList struct {
-	Build []Build `json:"build"`
+	BuildName string  `json:"buildName"`
+	Pedals    []Pedal `json:"pedals"`
 }
 
 func check(e error) {
@@ -61,11 +54,11 @@ func check(e error) {
 	}
 }
 
-func getPedalComponents(s string) []BomBuildComponents {
-	pedalJson, err := os.Open("../pedals/" + s + ".pedal.json")
+func getPedalComponents(pedalId string) []BomComponents {
+	pedalJson, err := os.Open("../pedals/" + pedalId + ".pedal.json")
 	check(err)
 	byteValue, _ := ioutil.ReadAll(pedalJson)
-	var bomBuildComponents []BomBuildComponents
+	var bomComponents []BomComponents
 	var pedal Pedal
 	json.Unmarshal(byteValue, &pedal)
 	for i := 0; i < len(pedal.Components); i++ {
@@ -75,34 +68,49 @@ func getPedalComponents(s string) []BomBuildComponents {
 			Value:       pedal.Components[i].Value,
 			Quantity:    pedal.Components[i].Quantity,
 		}
-		buildComponent := BomBuildComponents{
-			Id:        pedal.Id,
+		var id string
+		switch pedal.Components[i].Category {
+		case "Enclosure", "Knob":
+			id = pedal.Id
+		default:
+			id = "All"
+		}
+		buildComponent := BomComponents{
+			Id:        id,
 			Component: component,
 		}
-		bomBuildComponents = append(bomBuildComponents, buildComponent)
+		bomComponents = append(bomComponents, buildComponent)
 	}
-	return bomBuildComponents
+	return bomComponents
 }
 
-func readBuildList(b []byte) Bom {
+func buildBom(b []byte) Bom {
 	var buildList BuildList
 	json.Unmarshal(b, &buildList)
-	var bom Bom
-	for i := 0; i < len(buildList.Build); i++ {
-		build := BomBuild{
-			BuildName: buildList.Build[i].BuildName,
-		}
-		for j := 0; j < len(buildList.Build[i].Pedals); j++ {
-			pedalComponents := getPedalComponents(buildList.Build[i].Pedals[j].Id)
-			build.Components = append(build.Components, pedalComponents...)
-		}
-		bom.Build = append(bom.Build, build)
+	bom := Bom{
+		BuildName: buildList.BuildName,
+	}
+	for i := 0; i < len(buildList.Pedals); i++ {
+		pedalComponents := getPedalComponents(buildList.Pedals[i].Id)
+		bom.Components = append(bom.Components, pedalComponents...)
 	}
 	return bom
 }
 
 func checkpoint() {
 	fmt.Println("checkpoint")
+	return
+}
+
+func printBomToCsv(b []byte) {
+	var bom Bom
+	json.Unmarshal(b, &bom)
+	sort.Slice(bom.Components, func(i, j int) bool {
+		return bom.Components[i].Category < bom.Components[j].Category
+	})
+	for j := 0; j < len(bom.Components); j++ {
+		fmt.Println(bom.BuildName + "," + bom.Components[j].Id + "," + bom.Components[j].Category + "," + bom.Components[j].SubCategory + "," + bom.Components[j].Value + "," + fmt.Sprint(bom.Components[j].Quantity))
+	}
 	return
 }
 
@@ -116,8 +124,9 @@ func main() {
 	defer buildList.Close()
 	byteValue, _ := ioutil.ReadAll(buildList)
 
-	build := readBuildList(byteValue)
+	build := buildBom(byteValue)
 	byteArray, err := json.Marshal(build)
 	check(err)
-	fmt.Println(string(byteArray))
+	printBomToCsv(byteArray)
+	//fmt.Println(string(byteArray))
 }

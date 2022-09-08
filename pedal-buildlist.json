@@ -1,9 +1,7 @@
 {
-    "build": [{
-        "buildName": "test",
-        "pedals": [
-            {"id": "awful-waffle"},
-            {"id": "black-65"}
-        ]
-    }]
+    "buildName": "test",
+    "pedals": [
+        {"id": "awful-waffle"},
+        {"id": "black-65"}
+    ]
 }
