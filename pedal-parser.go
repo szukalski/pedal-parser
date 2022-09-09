@@ -109,6 +109,7 @@ func printBomToCsv(b []byte) {
 	sort.Slice(bom.Components, func(i, j int) bool {
 		return bom.Components[i].Category < bom.Components[j].Category
 	})
+	fmt.Println("buildName,id,category,sub-category,value,quantity")
 	for j := 0; j < len(bom.Components); j++ {
 		fmt.Println(bom.BuildName + "," + bom.Components[j].Id + "," + bom.Components[j].Category + "," + bom.Components[j].SubCategory + "," + bom.Components[j].Value + "," + fmt.Sprint(bom.Components[j].Quantity))
 	}
