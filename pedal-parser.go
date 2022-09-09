@@ -55,7 +55,7 @@ func check(e error) {
 	}
 }
 
-func getPedalComponents(pedalId string) []BomComponents {
+func getPedalComponents(pedalId, pedalJsonLocation string) []BomComponents {
 	pedalJson, err := os.Open(pedalJsonLocation + pedalId + ".pedal.json")
 	check(err)
 	byteValue, _ := ioutil.ReadAll(pedalJson)
@@ -85,14 +85,14 @@ func getPedalComponents(pedalId string) []BomComponents {
 	return bomComponents
 }
 
-func buildBom(b []byte) Bom {
+func buildBom(b []byte, pedalJsonLocation string) Bom {
 	var buildList BuildList
 	json.Unmarshal(b, &buildList)
 	bom := Bom{
 		BuildName: buildList.BuildName,
 	}
 	for i := 0; i < len(buildList.Pedals); i++ {
-		pedalComponents := getPedalComponents(buildList.Pedals[i].Id)
+		pedalComponents := getPedalComponents(buildList.Pedals[i].Id, pedalJsonLocation)
 		bom.Components = append(bom.Components, pedalComponents...)
 	}
 	return bom
@@ -115,18 +115,16 @@ func printBomToCsv(b []byte) {
 	return
 }
 
-var pedalJsonLocation string
-
 func main() {
 	buildJson := flag.String("buildJson", "pedal-buildlist.json", "A list of pedal builds")
-	pedalJsonLocation = *flag.String("pedalJson", "../pedals/", "Location for pedal jsons")
+	pedalJsonLocation := *flag.String("pedalJson", "../pedals/", "Location for pedal jsons")
 	flag.Parse()
 	buildList, err := os.Open(*buildJson)
 	check(err)
 	defer buildList.Close()
 	byteValue, _ := ioutil.ReadAll(buildList)
 
-	build := buildBom(byteValue)
+	build := buildBom(byteValue, pedalJsonLocation)
 	byteArray, err := json.Marshal(build)
 	check(err)
 	printBomToCsv(byteArray)
