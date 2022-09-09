@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -55,7 +56,7 @@ func check(e error) {
 }
 
 func getPedalComponents(pedalId string) []BomComponents {
-	pedalJson, err := os.Open("../pedals/" + pedalId + ".pedal.json")
+	pedalJson, err := os.Open(pedalJsonLocation + pedalId + ".pedal.json")
 	check(err)
 	byteValue, _ := ioutil.ReadAll(pedalJson)
 	var bomComponents []BomComponents
@@ -114,12 +115,13 @@ func printBomToCsv(b []byte) {
 	return
 }
 
+var pedalJsonLocation string
+
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("Usage: pedal-parser 'pedal-buildlist.json'")
-		os.Exit(1)
-	}
-	buildList, err := os.Open(os.Args[1])
+	buildJson := flag.String("buildJson", "pedal-buildlist.json", "A list of pedal builds")
+	pedalJsonLocation = *flag.String("pedalJson", "../pedals/", "Location for pedal jsons")
+	flag.Parse()
+	buildList, err := os.Open(*buildJson)
 	check(err)
 	defer buildList.Close()
 	byteValue, _ := ioutil.ReadAll(buildList)
