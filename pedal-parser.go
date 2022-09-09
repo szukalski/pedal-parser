@@ -118,14 +118,14 @@ func printBomToCsv(b []byte) {
 
 func main() {
 	buildJson := flag.String("buildJson", "pedal-buildlist.json", "A list of pedal builds")
-	pedalJsonLocation := *flag.String("pedalJson", "../pedals/", "Location for pedal jsons")
+	pedalJsonLocation := flag.String("pedalJson", "../pedals/", "Location for pedal jsons")
 	flag.Parse()
 	buildList, err := os.Open(*buildJson)
 	check(err)
 	defer buildList.Close()
 	byteValue, _ := ioutil.ReadAll(buildList)
 
-	build := buildBom(byteValue, pedalJsonLocation)
+	build := buildBom(byteValue, *pedalJsonLocation)
 	byteArray, err := json.Marshal(build)
 	check(err)
 	printBomToCsv(byteArray)
