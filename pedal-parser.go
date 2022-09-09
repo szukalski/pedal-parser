@@ -56,7 +56,7 @@ func check(e error) {
 }
 
 func getPedalComponents(pedalId, pedalJsonLocation string) []BomComponents {
-	pedalJson, err := os.Open(pedalJsonLocation + pedalId + ".pedal.json")
+	pedalJson, err := os.Open(pedalJsonLocation + "/" + pedalId + ".pedal.json")
 	check(err)
 	byteValue, _ := ioutil.ReadAll(pedalJson)
 	var bomComponents []BomComponents
