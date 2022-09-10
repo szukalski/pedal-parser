@@ -117,17 +117,24 @@ func printBomToCsv(b []byte) {
 }
 
 func main() {
-	buildJson := flag.String("buildJson", "pedal-buildlist.json", "A list of pedal builds")
-	pedalJsonLocation := flag.String("pedalJson", "../pedals/", "Location for pedal jsons")
+	buildJson := flag.String("buildJson", "pedal-buildlist.json", "A JSON build list of pedals")
+	pedalJsonLocation := flag.String("pedalJson", "../pedals", "Location for pedal jsons")
+	singlePedal := flag.String("pedalId", "", "ID of a single pedal")
 	flag.Parse()
-	buildList, err := os.Open(*buildJson)
-	check(err)
-	defer buildList.Close()
-	byteValue, _ := ioutil.ReadAll(buildList)
-
+	var byteValue []byte
+	if *singlePedal != "" {
+		text := "{\"buildName\":\"" + *singlePedal + "\", \"pedals\": [{\"id\":\"" + *singlePedal + "\"}]}"
+		byteValue = []byte(text)
+	} else {
+		buildList, err := os.Open(*buildJson)
+		check(err)
+		defer buildList.Close()
+		byteValue, _ = ioutil.ReadAll(buildList)
+	}
 	build := buildBom(byteValue, *pedalJsonLocation)
 	byteArray, err := json.Marshal(build)
 	check(err)
 	printBomToCsv(byteArray)
+	fmt.Println(string(byteValue))
 	//fmt.Println(string(byteArray))
 }
