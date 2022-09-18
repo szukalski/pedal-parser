@@ -135,6 +135,4 @@ func main() {
 	byteArray, err := json.Marshal(build)
 	check(err)
 	printBomToCsv(byteArray)
-	fmt.Println(string(byteValue))
-	//fmt.Println(string(byteArray))
 }
